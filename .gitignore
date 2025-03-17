@@ -1,0 +1,5 @@
+/.idea
+.env
+_MACOSX
+.DS_Store
+/tmp
