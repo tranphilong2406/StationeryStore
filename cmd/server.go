@@ -66,6 +66,7 @@ func SetHandler() *gin.Engine {
 
 	r.POST("/api/example", api.CreateExample)
 	r.GET("/api/example", api.GetExample)
+	r.POST("/api/examples", api.CreateListExample)
 
 	return r
 }

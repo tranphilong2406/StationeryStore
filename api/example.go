@@ -4,7 +4,6 @@ import (
 	"StoreServer/models"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,11 +16,30 @@ func CreateExample(c *gin.Context) {
 		return
 	}
 
-	example := models.NewExample(req)
+	res := models.ExampleDB.Create(req)
+	if res.Code != http.StatusOK {
+		//response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
+		c.JSON(res.Code, res)
+		return
+	}
 
-	fmt.Println("example: ", example)
+	c.JSON(res.Code, res)
+}
 
-	res, err := models.ExampleDB.Create(example)
+func CreateListExample(c *gin.Context) {
+	var req []models.Example
+
+	if err := c.ShouldBind(&req); err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	lst := make([]interface{}, len(req))
+	for i, v := range req {
+		lst[i] = v
+	}
+
+	res, err := models.ExampleDB.CreateMany(lst)
 	if err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
 		return

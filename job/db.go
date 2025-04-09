@@ -3,6 +3,7 @@ package job
 import (
 	"StoreServer/config"
 	"StoreServer/utils/logger"
+	"StoreServer/utils/response"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -10,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
+	"net/http"
+	"reflect"
 	"time"
 )
 
@@ -116,16 +119,131 @@ func (d *DB) Init(dbname string) {
 
 }
 
-func (d *DB) Create(inc interface{}) (string, error) {
+func (d *DB) NewObject() interface{} {
+	tmp := reflect.TypeOf(d.TemplateObj)
+	return reflect.New(tmp).Interface()
+}
+
+func (d *DB) NewList(slot int) interface{} {
+	tmp := reflect.TypeOf(d.TemplateObj)
+	return reflect.MakeSlice(reflect.SliceOf(tmp), 0, slot).Interface()
+}
+
+func (d *DB) Count(filter interface{}) response.Response {
+	count, err := d.collection.CountDocuments(context.Background(), filter)
+	if err != nil {
+		return response.Response{
+			Message: err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+			Total:   int(count),
+		}
+	}
+
+	return response.Response{
+		Message: "Count query successfully!",
+		Code:    http.StatusOK,
+		Data:    nil,
+		Total:   int(count),
+	}
+}
+
+// Query get all objet in DB
+func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
+
+	return response.Response{}
+}
+
+// QueryOne get a specific object in DB
+func (d *DB) QueryOne(inc interface{}) response.Response {
+	return response.Response{}
+}
+
+// Create one object to db
+func (d *DB) Create(inc interface{}) response.Response {
 	obj, err := d.convertToBson(inc)
 	if err != nil {
-		return "Convert Error: " + err.Error(), err
+		return response.Response{
+			Message: "Convert Error: " + err.Error(),
+			Data:    nil,
+			Code:    500,
+		}
+	}
+
+	if obj["created_time"] == nil {
+		obj["created_time"] = time.Now()
+		obj["updated_time"] = obj["created_time"]
+	} else {
+		obj["updated_time"] = time.Now()
 	}
 
 	_, err = d.db.Collection(d.ColName).InsertOne(context.TODO(), obj)
 	if err != nil {
+		return response.Response{
+			Message: "DB Error: " + err.Error(),
+			Data:    nil,
+			Code:    500,
+		}
+	}
+
+	entity, _ := d.convertToObj(obj)
+
+	return response.Response{
+		Message: "Create " + d.ColName + " successfully!",
+		Data:    entity,
+		Code:    http.StatusOK,
+	}
+}
+
+// CreateMany insert many object to DB
+func (d *DB) CreateMany(incList ...interface{}) (string, error) {
+	objs := []bson.M{}
+	ints := []interface{}{}
+
+	if len(incList) == 1 {
+		incList = incList[0].([]interface{})
+	}
+
+	for _, inc := range incList {
+		obj, err := d.convertToBson(inc)
+		if err != nil {
+			return "Convert Error: " + err.Error(), err
+		}
+
+		if obj["created_time"] == nil {
+			obj["created_time"] = time.Now()
+			obj["updated_time"] = obj["created_time"]
+		} else {
+			obj["updated_time"] = time.Now()
+		}
+
+		objs = append(objs, obj)
+		ints = append(ints, obj)
+	}
+
+	_, err := d.db.Collection(d.ColName).InsertMany(context.TODO(), ints)
+	if err != nil {
 		return "DB Error: " + err.Error(), err
 	}
 
-	return "Create " + d.ColName + " successfully!", nil
+	return "Create " + d.ColName + "(s) successfully!", nil
+}
+
+// Update all matched item in DB
+func (d *DB) Update(inc interface{}) (string, error) {
+	return d.ColName, nil
+}
+
+// UpdateOne update one matched item
+func (d *DB) UpdateOne(incList ...interface{}) (string, error) {
+	return d.ColName, nil
+}
+
+// Delete all matched item
+func (d *DB) Delete(selector interface{}) (string, error) {
+	return d.ColName, nil
+}
+
+func (d *DB) DeleteOne(selector interface{}) (string, error) {
+	return d.ColName, nil
 }
