@@ -5,8 +5,10 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func CreateProduct(c *gin.Context) {
@@ -28,8 +30,9 @@ func CreateProduct(c *gin.Context) {
 func GetProduct(c *gin.Context) {
 	page := utils.ParseInt(c.Param("page"), 1)
 	pageSize := utils.ParseInt(c.Param("page_size"), 10)
-	filter := models.Product{}
-	filter.DeletedTime = nil
+	filter := bson.M{
+		"deleted_time": nil,
+	}
 
 	offset := (page - 1) * pageSize
 	res := models.ProductDB.Query(filter, offset, pageSize)
@@ -38,7 +41,7 @@ func GetProduct(c *gin.Context) {
 		return
 	}
 
-	res.Data = res.Data.(models.ListProduct)
+	res.Data = res.Data.([]models.Product)
 
 	c.JSON(res.Code, res)
 }

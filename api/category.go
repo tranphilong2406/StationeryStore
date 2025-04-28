@@ -5,8 +5,10 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func CreateCategory(c *gin.Context) {
@@ -28,8 +30,9 @@ func CreateCategory(c *gin.Context) {
 func GetCategory(c *gin.Context) {
 	page := utils.ParseInt(c.Param("page"), 1)
 	pageSize := utils.ParseInt(c.Param("page_size"), 10)
-	filter := models.Category{}
-	filter.DeletedTime = nil
+	filter := bson.M{
+		"deleted_time": nil,
+	}
 
 	offset := (page - 1) * pageSize
 	res := models.CategoryDB.Query(filter, offset, pageSize)

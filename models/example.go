@@ -2,8 +2,9 @@ package models
 
 import (
 	"StoreServer/job"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var ExampleDB = job.DB{
@@ -25,5 +26,5 @@ type ListExample struct {
 }
 
 func InitExampleDB() {
-	ExampleDB.Init("example")
+	ExampleDB.Init("store")
 }
