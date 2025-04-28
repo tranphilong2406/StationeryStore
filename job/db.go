@@ -150,8 +150,36 @@ func (d *DB) Count(filter interface{}) response.Response {
 
 // Query get all objet in DB
 func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(offset))
 
-	return response.Response{}
+	cursor, err := d.db.Collection(d.ColName).Find(context.TODO(), inc, findOptions)
+	if err != nil {
+		return response.Response{
+			Message: "DB Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var result = d.NewList(limit)
+	err = cursor.All(context.TODO(), &result)
+	if err != nil || reflect.ValueOf(result).Len() == 0 {
+		return response.Response{
+			Message: "No data found!",
+			Data:    nil,
+			Code:    http.StatusNotFound,
+		}
+	}
+
+	return response.Response{
+		Message: "Query " + d.ColName + " successfully!",
+		Data:    result,
+		Code:    http.StatusOK,
+	}
 }
 
 // QueryOne get a specific object in DB
@@ -186,11 +214,9 @@ func (d *DB) Create(inc interface{}) response.Response {
 		}
 	}
 
-	entity, _ := d.convertToObj(obj)
-
 	return response.Response{
 		Message: "Create " + d.ColName + " successfully!",
-		Data:    entity,
+		Data:    obj,
 		Code:    http.StatusOK,
 	}
 }

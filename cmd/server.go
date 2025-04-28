@@ -23,6 +23,8 @@ func SetupServer() {
 	defer job.Disconnect()
 	// init collection
 	models.InitExampleDB()
+	models.InitProductDB()
+	models.InitCategoryDB()
 
 	s := SetHandler()
 
@@ -67,6 +69,9 @@ func SetHandler() *gin.Engine {
 	r.POST("/api/example", api.CreateExample)
 	r.GET("/api/example", api.GetExample)
 	r.POST("/api/examples", api.CreateListExample)
-
+	r.GET("/api/product/", api.GetProduct)
+	r.POST("/api/product", api.CreateProduct)
+	r.GET("/api/category/", api.GetCategory)
+	r.POST("/api/category", api.CreateCategory)
 	return r
 }
