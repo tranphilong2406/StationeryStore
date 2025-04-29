@@ -71,6 +71,7 @@ func SetHandler() *gin.Engine {
 	r.GET("/api/example", api.GetExample)
 	r.POST("/api/examples", api.CreateListExample)
 	r.PUT("/api/example/", api.UpdateExample)
+	r.DELETE("/api/example/:id", api.DeleteExample)
 	// Product routes
 	r.GET("/api/product/", api.GetProduct)
 	r.POST("/api/product", api.CreateProduct)

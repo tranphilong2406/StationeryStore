@@ -85,7 +85,7 @@ func UpdateProduct(c *gin.Context) {
 	update.Stock = req.Stock
 	update.Price = req.Price
 
-	updating := models.ProductDB.Update(filter, update)
+	updating := models.ProductDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }

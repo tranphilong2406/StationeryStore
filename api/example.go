@@ -90,7 +90,28 @@ func UpdateExample(c *gin.Context) {
 
 	update.Name = req.Name
 
-	updating := models.ExampleDB.Update(filter, update)
+	updating := models.ExampleDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
+}
+
+func DeleteExample(c *gin.Context) {
+	id := c.Param("id")
+
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	filter := bson.M{
+		"_id": id,
+	}
+
+	res := models.ExampleDB.DeleteOne(filter)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	c.JSON(res.Code, res)
 }

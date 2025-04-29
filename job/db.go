@@ -281,7 +281,7 @@ func (d *DB) CreateMany(incList ...interface{}) response.Response {
 }
 
 // Update all matched item in DB
-func (d *DB) Update(filter interface{}, updater interface{}) response.Response {
+func (d *DB) UpdateOne(filter interface{}, updater interface{}) response.Response {
 	obj, err := d.convertToBson(updater)
 	if err != nil {
 		return response.Response{
@@ -320,16 +320,33 @@ func (d *DB) Update(filter interface{}, updater interface{}) response.Response {
 	}
 }
 
-// UpdateOne update one matched item
-func (d *DB) UpdateOne(filter interface{}) (string, error) {
-	return d.ColName, nil
-}
+func (d *DB) DeleteOne(filter interface{}) response.Response {
+	del := bson.M{
+		"deleted_time": time.Now(),
+	}
 
-// Delete all matched item
-func (d *DB) Delete(selector interface{}) (string, error) {
-	return d.ColName, nil
-}
+	info, err := d.db.Collection(d.ColName).UpdateOne(context.TODO(), filter, bson.M{
+		"$set": del,
+	})
+	if err != nil {
+		return response.Response{
+			Message: "DB Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
+	}
 
-func (d *DB) DeleteOne(selector interface{}) (string, error) {
-	return d.ColName, nil
+	if info.MatchedCount == 0 {
+		return response.Response{
+			Message: "Not found any " + d.ColName + ".",
+			Data:    nil,
+			Code:    http.StatusOK,
+		}
+	}
+
+	return response.Response{
+		Message: "Deleted " + d.ColName + " successfully!",
+		Data:    nil,
+		Code:    http.StatusOK,
+	}
 }

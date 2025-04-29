@@ -73,7 +73,7 @@ func UpdateCategory(c *gin.Context) {
 	update.Name = req.Name
 	update.Description = req.Description
 
-	updating := models.CategoryDB.Update(filter, update)
+	updating := models.CategoryDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }
