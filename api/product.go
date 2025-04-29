@@ -5,6 +5,7 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,11 @@ func CreateProduct(c *gin.Context) {
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	if ok := req.Validate(); ok.Code != http.StatusOK {
+		c.JSON(ok.Code, ok)
 		return
 	}
 
@@ -46,6 +52,42 @@ func GetProduct(c *gin.Context) {
 	c.JSON(res.Code, res)
 }
 
-func UpdateProduct() {}
+func UpdateProduct(c *gin.Context) {
+	var req models.Product
+
+	if err := c.ShouldBind(&req); err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	if ok := req.Validate(); ok.Code != http.StatusOK {
+		c.JSON(ok.Code, ok)
+		return
+	}
+
+	filter := bson.M{
+		"_id":          req.ID,
+		"deleted_time": nil,
+	}
+
+	res := models.ProductDB.QueryOne(filter)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	update := res.Data.(*models.Product)
+	fmt.Println("update: ", update)
+
+	update.Name = req.Name
+	update.Description = req.Description
+	update.Image = req.Image
+	update.Stock = req.Stock
+	update.Price = req.Price
+
+	updating := models.ProductDB.Update(filter, update)
+
+	c.JSON(updating.Code, updating)
+}
 
 func DeleteProduct() {}

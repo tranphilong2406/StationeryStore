@@ -6,14 +6,15 @@ import (
 	"StoreServer/utils/response"
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/event"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
 	"net/http"
 	"reflect"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/event"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type DB struct {
@@ -44,16 +45,13 @@ func DBConnect() {
 			log.Fatalf("Succeeded: %v\n", e.Failure)
 		},
 	}
-	fmt.Println(1)
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(cfg.MONGOURL).SetMonitor(monitor).SetServerAPIOptions(serverAPI)
-	fmt.Println(2)
 	conn, err = mongo.Connect(opts)
 	if err != nil {
 		logger.GetLogger().Fatal(err.Error())
 	}
 
-	fmt.Println(3)
 	if err = conn.Ping(ctx, nil); err != nil {
 		logger.GetLogger().Fatal(err.Error())
 	}
@@ -120,8 +118,11 @@ func (d *DB) Init(dbname string) {
 }
 
 func (d *DB) NewObject() interface{} {
-	tmp := reflect.TypeOf(d.TemplateObj)
-	return reflect.New(tmp).Interface()
+	t := reflect.TypeOf(d.TemplateObj)
+	if t.Kind() == reflect.Ptr {
+		return reflect.New(t.Elem()).Interface() // create *T from *T
+	}
+	return reflect.New(t).Interface() // create *T from T
 }
 
 func (d *DB) NewList(slot int) interface{} {
@@ -169,7 +170,7 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 	err = cursor.All(context.TODO(), &result)
 	if err != nil || reflect.ValueOf(result).Len() == 0 {
 		return response.Response{
-			Message: "No data found!",
+			Message: "Not found any " + d.ColName + ".",
 			Data:    nil,
 			Code:    http.StatusNotFound,
 		}
@@ -184,7 +185,19 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 
 // QueryOne get a specific object in DB
 func (d *DB) QueryOne(inc interface{}) response.Response {
-	return response.Response{}
+	data := d.NewObject()
+	err := d.db.Collection(d.ColName).FindOne(context.TODO(), inc).Decode(data)
+	if err != nil {
+		return response.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "DB error: " + err.Error(),
+		}
+	}
+	return response.Response{
+		Message: "Query " + d.ColName + " successfully!",
+		Code:    http.StatusOK,
+		Data:    data,
+	}
 }
 
 // Create one object to db
@@ -194,7 +207,7 @@ func (d *DB) Create(inc interface{}) response.Response {
 		return response.Response{
 			Message: "Convert Error: " + err.Error(),
 			Data:    nil,
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 		}
 	}
 
@@ -210,7 +223,7 @@ func (d *DB) Create(inc interface{}) response.Response {
 		return response.Response{
 			Message: "DB Error: " + err.Error(),
 			Data:    nil,
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 		}
 	}
 
@@ -222,7 +235,7 @@ func (d *DB) Create(inc interface{}) response.Response {
 }
 
 // CreateMany insert many object to DB
-func (d *DB) CreateMany(incList ...interface{}) (string, error) {
+func (d *DB) CreateMany(incList ...interface{}) response.Response {
 	objs := []bson.M{}
 	ints := []interface{}{}
 
@@ -233,7 +246,11 @@ func (d *DB) CreateMany(incList ...interface{}) (string, error) {
 	for _, inc := range incList {
 		obj, err := d.convertToBson(inc)
 		if err != nil {
-			return "Convert Error: " + err.Error(), err
+			return response.Response{
+				Message: "Convert Error: " + err.Error(),
+				Data:    nil,
+				Code:    http.StatusInternalServerError,
+			}
 		}
 
 		if obj["created_time"] == nil {
@@ -249,19 +266,62 @@ func (d *DB) CreateMany(incList ...interface{}) (string, error) {
 
 	_, err := d.db.Collection(d.ColName).InsertMany(context.TODO(), ints)
 	if err != nil {
-		return "DB Error: " + err.Error(), err
+		return response.Response{
+			Message: "DB Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
-	return "Create " + d.ColName + "(s) successfully!", nil
+	return response.Response{
+		Message: "Create " + d.ColName + " successfully!",
+		Data:    objs,
+		Code:    http.StatusOK,
+	}
 }
 
 // Update all matched item in DB
-func (d *DB) Update(inc interface{}) (string, error) {
-	return d.ColName, nil
+func (d *DB) Update(filter interface{}, updater interface{}) response.Response {
+	obj, err := d.convertToBson(updater)
+	if err != nil {
+		return response.Response{
+			Message: "Convert Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
+	obj["updated_time"] = time.Now()
+	delete(obj, "_id")
+
+	info, err := d.db.Collection(d.ColName).UpdateOne(context.TODO(), filter, bson.M{
+		"$set": obj,
+	})
+	if err != nil {
+		return response.Response{
+			Message: "DB Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
+	if info.MatchedCount == 0 {
+		return response.Response{
+			Message: "Not found any " + d.ColName + ".",
+			Data:    nil,
+			Code:    http.StatusOK,
+		}
+	}
+
+	return response.Response{
+		Message: "Updated " + d.ColName + " successfully!",
+		Data:    nil,
+		Code:    http.StatusOK,
+	}
 }
 
 // UpdateOne update one matched item
-func (d *DB) UpdateOne(incList ...interface{}) (string, error) {
+func (d *DB) UpdateOne(filter interface{}) (string, error) {
 	return d.ColName, nil
 }
 

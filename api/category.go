@@ -52,12 +52,30 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	//res := models.CategoryDB.Update(req)
-	//if res.Code != http.StatusOK {
-	//	c.JSON(res.Code, res)
-	//	return
-	//}
-	//c.JSON(res.Code, res)
+	if ok := req.Validate(); ok.Code != http.StatusOK {
+		c.JSON(ok.Code, ok)
+		return
+	}
+
+	filter := bson.M{
+		"_id":          req.ID,
+		"deleted_time": nil,
+	}
+
+	res := models.CategoryDB.QueryOne(filter)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	update := res.Data.(*models.Category)
+
+	update.Name = req.Name
+	update.Description = req.Description
+
+	updating := models.CategoryDB.Update(filter, update)
+
+	c.JSON(updating.Code, updating)
 }
 
 func DeleteCategory(c *gin.Context) {

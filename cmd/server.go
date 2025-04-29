@@ -7,10 +7,11 @@ import (
 	"StoreServer/models"
 	"StoreServer/utils/logger"
 	"fmt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func SetupServer() {
@@ -65,13 +66,19 @@ func SetHandler() *gin.Engine {
 		AllowFiles:             true,
 	}))
 	r.Use(gin.Recovery())
-
+	// Example routes
 	r.POST("/api/example", api.CreateExample)
 	r.GET("/api/example", api.GetExample)
 	r.POST("/api/examples", api.CreateListExample)
+	r.PUT("/api/example/", api.UpdateExample)
+	// Product routes
 	r.GET("/api/product/", api.GetProduct)
 	r.POST("/api/product", api.CreateProduct)
+	r.PUT("/api/product/", api.UpdateProduct)
+	// Category routes
 	r.GET("/api/category/", api.GetCategory)
 	r.POST("/api/category", api.CreateCategory)
+	r.PUT("/api/category/", api.UpdateCategory)
+
 	return r
 }
