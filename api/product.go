@@ -90,4 +90,29 @@ func UpdateProduct(c *gin.Context) {
 	c.JSON(updating.Code, updating)
 }
 
-func DeleteProduct() {}
+func DeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	res := models.ProductDB.DeleteOne(filter)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	c.JSON(res.Code, res)
+}

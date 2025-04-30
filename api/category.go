@@ -79,17 +79,28 @@ func UpdateCategory(c *gin.Context) {
 }
 
 func DeleteCategory(c *gin.Context) {
-	var req models.Category
+	id := c.Param("id")
 
-	if err := c.ShouldBind(&req); err != nil {
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
 	}
 
-	//res := models.CategoryDB.Delete(req)
-	//if res.Code != http.StatusOK {
-	//	c.JSON(res.Code, res)
-	//	return
-	//}
-	//c.JSON(res.Code, res)
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	res := models.CategoryDB.DeleteOne(filter)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	c.JSON(res.Code, res)
 }

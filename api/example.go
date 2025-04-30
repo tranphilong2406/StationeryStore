@@ -103,8 +103,14 @@ func DeleteExample(c *gin.Context) {
 		return
 	}
 
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
 	filter := bson.M{
-		"_id": id,
+		"_id": objID,
 	}
 
 	res := models.ExampleDB.DeleteOne(filter)

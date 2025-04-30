@@ -76,10 +76,11 @@ func SetHandler() *gin.Engine {
 	r.GET("/api/product/", api.GetProduct)
 	r.POST("/api/product", api.CreateProduct)
 	r.PUT("/api/product/", api.UpdateProduct)
+	r.DELETE("/api/product/:id", api.DeleteProduct)
 	// Category routes
 	r.GET("/api/category/", api.GetCategory)
 	r.POST("/api/category", api.CreateCategory)
 	r.PUT("/api/category/", api.UpdateCategory)
-
+	r.DELETE("/api/category/:id", api.DeleteCategory)
 	return r
 }
