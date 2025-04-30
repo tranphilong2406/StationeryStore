@@ -2,6 +2,7 @@ package api
 
 import (
 	"StoreServer/models"
+	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
 	"net/http"
@@ -10,22 +11,32 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func CreateExample(c *gin.Context) {
-	var req models.Example
+func CreateCategory(c *gin.Context) {
+	var req models.Category
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
 	}
 
-	if ok := req.Validate(); ok.Code != http.StatusOK {
-		c.JSON(ok.Code, ok)
+	res := models.CategoryDB.Create(req)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
 		return
 	}
+	c.JSON(res.Code, res)
+}
 
-	res := models.ExampleDB.Create(req)
+func GetCategory(c *gin.Context) {
+	page := utils.ParseInt(c.Param("page"), 1)
+	pageSize := utils.ParseInt(c.Param("page_size"), 10)
+	filter := bson.M{
+		"deleted_time": nil,
+	}
+
+	offset := (page - 1) * pageSize
+	res := models.CategoryDB.Query(filter, offset, pageSize)
 	if res.Code != http.StatusOK {
-		//response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
 		c.JSON(res.Code, res)
 		return
 	}
@@ -33,37 +44,8 @@ func CreateExample(c *gin.Context) {
 	c.JSON(res.Code, res)
 }
 
-func CreateListExample(c *gin.Context) {
-	var req []models.Example
-
-	if err := c.ShouldBind(&req); err != nil {
-		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
-		return
-	}
-
-	for _, v := range req {
-		if ok := v.Validate(); ok.Code != http.StatusOK {
-			c.JSON(ok.Code, ok)
-			return
-		}
-	}
-
-	lst := make([]interface{}, len(req))
-	for i, v := range req {
-		lst[i] = v
-	}
-
-	res := models.ExampleDB.CreateMany(lst)
-
-	c.JSON(res.Code, res)
-}
-
-func GetExample(c *gin.Context) {
-	response.MyResponse.Error(c, myerror.EmptyParam())
-}
-
-func UpdateExample(c *gin.Context) {
-	var req models.Example
+func UpdateCategory(c *gin.Context) {
+	var req models.Category
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
@@ -80,22 +62,23 @@ func UpdateExample(c *gin.Context) {
 		"deleted_time": nil,
 	}
 
-	res := models.ExampleDB.QueryOne(filter)
+	res := models.CategoryDB.QueryOne(filter)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
 	}
 
-	update := res.Data.(*models.Example)
+	update := res.Data.(*models.Category)
 
 	update.Name = req.Name
+	update.Description = req.Description
 
-	updating := models.ExampleDB.UpdateOne(filter, update)
+	updating := models.CategoryDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }
 
-func DeleteExample(c *gin.Context) {
+func DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
 
 	if id == "" {
@@ -113,7 +96,7 @@ func DeleteExample(c *gin.Context) {
 		"_id": objID,
 	}
 
-	res := models.ExampleDB.DeleteOne(filter)
+	res := models.CategoryDB.DeleteOne(filter)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return

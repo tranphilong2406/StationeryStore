@@ -2,16 +2,18 @@ package api
 
 import (
 	"StoreServer/models"
+	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func CreateExample(c *gin.Context) {
-	var req models.Example
+func CreateProduct(c *gin.Context) {
+	var req models.Product
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
@@ -23,47 +25,35 @@ func CreateExample(c *gin.Context) {
 		return
 	}
 
-	res := models.ExampleDB.Create(req)
+	res := models.ProductDB.Create(req)
 	if res.Code != http.StatusOK {
-		//response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
+		c.JSON(res.Code, res)
+		return
+	}
+	c.JSON(res.Code, res)
+}
+
+func GetProduct(c *gin.Context) {
+	page := utils.ParseInt(c.Param("page"), 1)
+	pageSize := utils.ParseInt(c.Param("page_size"), 10)
+	filter := bson.M{
+		"deleted_time": nil,
+	}
+
+	offset := (page - 1) * pageSize
+	res := models.ProductDB.Query(filter, offset, pageSize)
+	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
 	}
 
-	c.JSON(res.Code, res)
-}
-
-func CreateListExample(c *gin.Context) {
-	var req []models.Example
-
-	if err := c.ShouldBind(&req); err != nil {
-		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
-		return
-	}
-
-	for _, v := range req {
-		if ok := v.Validate(); ok.Code != http.StatusOK {
-			c.JSON(ok.Code, ok)
-			return
-		}
-	}
-
-	lst := make([]interface{}, len(req))
-	for i, v := range req {
-		lst[i] = v
-	}
-
-	res := models.ExampleDB.CreateMany(lst)
+	res.Data = res.Data.([]models.Product)
 
 	c.JSON(res.Code, res)
 }
 
-func GetExample(c *gin.Context) {
-	response.MyResponse.Error(c, myerror.EmptyParam())
-}
-
-func UpdateExample(c *gin.Context) {
-	var req models.Example
+func UpdateProduct(c *gin.Context) {
+	var req models.Product
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
@@ -80,22 +70,27 @@ func UpdateExample(c *gin.Context) {
 		"deleted_time": nil,
 	}
 
-	res := models.ExampleDB.QueryOne(filter)
+	res := models.ProductDB.QueryOne(filter)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
 	}
 
-	update := res.Data.(*models.Example)
+	update := res.Data.(*models.Product)
+	fmt.Println("update: ", update)
 
 	update.Name = req.Name
+	update.Description = req.Description
+	update.Image = req.Image
+	update.Stock = req.Stock
+	update.Price = req.Price
 
-	updating := models.ExampleDB.UpdateOne(filter, update)
+	updating := models.ProductDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }
 
-func DeleteExample(c *gin.Context) {
+func DeleteProduct(c *gin.Context) {
 	id := c.Param("id")
 
 	if id == "" {
@@ -113,7 +108,7 @@ func DeleteExample(c *gin.Context) {
 		"_id": objID,
 	}
 
-	res := models.ExampleDB.DeleteOne(filter)
+	res := models.ProductDB.DeleteOne(filter)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return

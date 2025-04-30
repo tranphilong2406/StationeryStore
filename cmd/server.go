@@ -7,10 +7,11 @@ import (
 	"StoreServer/models"
 	"StoreServer/utils/logger"
 	"fmt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func SetupServer() {
@@ -23,6 +24,8 @@ func SetupServer() {
 	defer job.Disconnect()
 	// init collection
 	models.InitExampleDB()
+	models.InitProductDB()
+	models.InitCategoryDB()
 
 	s := SetHandler()
 
@@ -63,9 +66,21 @@ func SetHandler() *gin.Engine {
 		AllowFiles:             true,
 	}))
 	r.Use(gin.Recovery())
-
+	// Example routes
 	r.POST("/api/example", api.CreateExample)
 	r.GET("/api/example", api.GetExample)
-
+	r.POST("/api/examples", api.CreateListExample)
+	r.PUT("/api/example/", api.UpdateExample)
+	r.DELETE("/api/example/:id", api.DeleteExample)
+	// Product routes
+	r.GET("/api/product/", api.GetProduct)
+	r.POST("/api/product", api.CreateProduct)
+	r.PUT("/api/product/", api.UpdateProduct)
+	r.DELETE("/api/product/:id", api.DeleteProduct)
+	// Category routes
+	r.GET("/api/category/", api.GetCategory)
+	r.POST("/api/category", api.CreateCategory)
+	r.PUT("/api/category/", api.UpdateCategory)
+	r.DELETE("/api/category/:id", api.DeleteCategory)
 	return r
 }

@@ -7,12 +7,19 @@ import (
 )
 
 type Response struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-	Code    int         `json:"code"`
+	Message  string      `json:"message"`
+	Data     interface{} `json:"data"`
+	Code     int         `json:"code"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"page_size"`
+	Total    int         `json:"total"`
 }
 
 var MyResponse Response
+
+func Respond(c *gin.Context, response *Response) {
+	c.JSON(response.Code, response)
+}
 
 func (Response) Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, map[string]interface{}{
