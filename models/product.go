@@ -28,6 +28,13 @@ type Product struct {
 	DeletedTime *time.Time    `json:"deleted_time" bson:"deleted_time,omitempty"`
 }
 
+type ProductOrder struct {
+	ID       string `bson:"_id,omitempty" json:"id"`
+	Quantity int    `bson:"quantity" json:"quantity"`
+	Price    int    `bson:"price" json:"price"`
+	Discount int    `bson:"discount" json:"discount"`
+}
+
 func (p *Product) Validate() response.Response {
 	res := response.Response{
 		Code:    http.StatusOK,

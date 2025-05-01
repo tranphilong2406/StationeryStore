@@ -24,11 +24,6 @@ func CreateExample(c *gin.Context) {
 	}
 
 	res := models.ExampleDB.Create(req)
-	if res.Code != http.StatusOK {
-		//response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
-		c.JSON(res.Code, res)
-		return
-	}
 
 	c.JSON(res.Code, res)
 }
@@ -114,10 +109,6 @@ func DeleteExample(c *gin.Context) {
 	}
 
 	res := models.ExampleDB.DeleteOne(filter)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
 
 	c.JSON(res.Code, res)
 }

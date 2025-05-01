@@ -20,10 +20,7 @@ func CreateCategory(c *gin.Context) {
 	}
 
 	res := models.CategoryDB.Create(req)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
+
 	c.JSON(res.Code, res)
 }
 
@@ -36,10 +33,6 @@ func GetCategory(c *gin.Context) {
 
 	offset := (page - 1) * pageSize
 	res := models.CategoryDB.Query(filter, offset, pageSize)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
 
 	c.JSON(res.Code, res)
 }
@@ -97,10 +90,6 @@ func DeleteCategory(c *gin.Context) {
 	}
 
 	res := models.CategoryDB.DeleteOne(filter)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
 
 	c.JSON(res.Code, res)
 }

@@ -26,6 +26,7 @@ func SetupServer() {
 	models.InitExampleDB()
 	models.InitProductDB()
 	models.InitCategoryDB()
+	models.InitOrderDB()
 
 	s := SetHandler()
 
@@ -82,5 +83,7 @@ func SetHandler() *gin.Engine {
 	r.POST("/api/category", api.CreateCategory)
 	r.PUT("/api/category/", api.UpdateCategory)
 	r.DELETE("/api/category/:id", api.DeleteCategory)
+	//Order routes
+	r.POST("/api/order/", api.CreateOrder)
 	return r
 }
