@@ -39,8 +39,6 @@ func (c Category) Validate() response.Response {
 	return res
 }
 
-// 	c.JSON(http.StatusOK, response.MyResponse.Success())
-
 func InitCategoryDB() {
 	CategoryDB.Init("store")
 }

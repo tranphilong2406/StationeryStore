@@ -26,10 +26,7 @@ func CreateProduct(c *gin.Context) {
 	}
 
 	res := models.ProductDB.Create(req)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
+
 	c.JSON(res.Code, res)
 }
 
@@ -109,10 +106,6 @@ func DeleteProduct(c *gin.Context) {
 	}
 
 	res := models.ProductDB.DeleteOne(filter)
-	if res.Code != http.StatusOK {
-		c.JSON(res.Code, res)
-		return
-	}
 
 	c.JSON(res.Code, res)
 }
