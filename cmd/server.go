@@ -85,5 +85,6 @@ func SetHandler() *gin.Engine {
 	r.DELETE("/api/category/:id", api.DeleteCategory)
 	//Order routes
 	r.POST("/api/order/", api.CreateOrder)
+	r.GET("/api/order/", api.GetOrder)
 	return r
 }

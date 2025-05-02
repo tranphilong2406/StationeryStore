@@ -155,6 +155,15 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(offset))
 
+	total, err := d.db.Collection(d.ColName).CountDocuments(context.TODO(), inc)
+	if err != nil {
+		return response.Response{
+			Message: "Count Error: " + err.Error(),
+			Data:    nil,
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
 	cursor, err := d.db.Collection(d.ColName).Find(context.TODO(), inc, findOptions)
 	if err != nil {
 		return response.Response{
@@ -168,7 +177,7 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 
 	var result = d.NewList(limit)
 	err = cursor.All(context.TODO(), &result)
-	if err != nil || reflect.ValueOf(result).Len() == 0 {
+	if err != nil {
 		return response.Response{
 			Message: "Not found any " + d.ColName + ".",
 			Data:    nil,
@@ -180,6 +189,7 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 		Message: "Query " + d.ColName + " successfully!",
 		Data:    result,
 		Code:    http.StatusOK,
+		Total:   int(total),
 	}
 }
 

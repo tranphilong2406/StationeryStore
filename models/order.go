@@ -5,6 +5,8 @@ import (
 	"StoreServer/utils/response"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var OrderDB = job.DB{
@@ -14,7 +16,7 @@ var OrderDB = job.DB{
 }
 
 type Order struct {
-	ID          string         `json:"id" bson:"_id,omitempty"`
+	ID          bson.ObjectID  `json:"id" bson:"_id,omitempty"`
 	Products    []ProductOrder `json:"products" bson:"products"`
 	TotalPrice  float64        `json:"total_price" bson:"total_price"`
 	CreatedTime *time.Time     `json:"created_time" bson:"created_time"`

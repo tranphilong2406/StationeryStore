@@ -2,8 +2,10 @@ package api
 
 import (
 	"StoreServer/models"
+	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,14 +25,8 @@ func CreateOrder(c *gin.Context) {
 	}
 
 	for idx := range len(req.Products) {
-		temp, err := bson.ObjectIDFromHex(req.Products[idx].ID)
-		if err != nil {
-			response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
-			return
-		}
-
 		filter := bson.M{
-			"_id": temp,
+			"_id": req.Products[idx].ID,
 		}
 
 		prod := models.ProductDB.QueryOne(filter)
@@ -55,7 +51,31 @@ func CreateOrder(c *gin.Context) {
 }
 
 func GetOrder(c *gin.Context) {
-	// Implementation for getting an order
+	page := utils.ParseInt(c.Query("page"), 1)
+	pageSize := utils.ParseInt(c.Query("page_size"), 10)
+	fmt.Println("page: ", page)
+	fmt.Println("page_size: ", pageSize)
+
+	filter := bson.M{
+		"deleted_time": nil,
+	}
+
+	offset := (page - 1) * pageSize
+	res := models.OrderDB.Query(filter, offset, pageSize)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	res.Data = res.Data.([]models.Order)
+	res.Page = page
+	res.PageSize = pageSize
+
+	c.JSON(res.Code, res)
+}
+
+func GetOrderByID(c *gin.Context) {
+
 }
 
 func UpdateOrder(c *gin.Context) {

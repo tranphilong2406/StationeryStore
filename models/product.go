@@ -29,10 +29,10 @@ type Product struct {
 }
 
 type ProductOrder struct {
-	ID       string `bson:"_id,omitempty" json:"id"`
-	Quantity int    `bson:"quantity" json:"quantity"`
-	Price    int    `bson:"price" json:"price"`
-	Discount int    `bson:"discount" json:"discount"`
+	ID       bson.ObjectID `bson:"_id" json:"id"`
+	Quantity int           `bson:"quantity" json:"quantity"`
+	Price    int           `bson:"price" json:"price"`
+	Discount int           `bson:"discount" json:"discount"`
 }
 
 func (p *Product) Validate() response.Response {
