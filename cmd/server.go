@@ -86,5 +86,7 @@ func SetHandler() *gin.Engine {
 	//Order routes
 	r.POST("/api/order/", api.CreateOrder)
 	r.GET("/api/order/", api.GetOrder)
+	r.GET("/api/order/:id", api.GetOrderByID)
+	r.DELETE("/api/order/:id", api.DeleteOrder)
 	return r
 }

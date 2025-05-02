@@ -75,13 +75,46 @@ func GetOrder(c *gin.Context) {
 }
 
 func GetOrderByID(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
 
-}
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
+		return
+	}
 
-func UpdateOrder(c *gin.Context) {
-	// Implementation for updating an order
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	result := models.OrderDB.QueryOne(filter)
+
+	c.JSON(result.Code, result)
 }
 
 func DeleteOrder(c *gin.Context) {
-	// Implementation for deleting an order
+	id := c.Param("id")
+
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	res := models.OrderDB.DeleteOne(filter)
+
+	c.JSON(res.Code, res)
 }
