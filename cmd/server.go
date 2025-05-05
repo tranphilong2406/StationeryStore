@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"StoreServer/api"
+	auth "StoreServer/api/auth"
 	"StoreServer/config"
 	"StoreServer/job"
 	"StoreServer/models"
@@ -27,6 +28,7 @@ func SetupServer() {
 	models.InitProductDB()
 	models.InitCategoryDB()
 	models.InitOrderDB()
+	models.InitAuthDB()
 
 	s := SetHandler()
 
@@ -88,5 +90,10 @@ func SetHandler() *gin.Engine {
 	r.GET("/api/order/", api.GetOrder)
 	r.GET("/api/order/:id", api.GetOrderByID)
 	r.DELETE("/api/order/:id", api.DeleteOrder)
+	// User routes
+	r.POST("/api/user", api.CreateUser)
+	r.PUT("/api/user/", api.UpdateUser)
+	// Auth routes
+	r.POST("/api/auth/login", auth.Login)
 	return r
 }

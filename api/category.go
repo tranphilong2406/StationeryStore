@@ -46,7 +46,10 @@ func UpdateCategory(c *gin.Context) {
 	}
 
 	if ok := req.Validate(); ok.Code != http.StatusOK {
-		c.JSON(ok.Code, ok)
+		response.MyResponse.Error(c, myerror.CustomError{
+			ErrorMessage: ok.Message,
+			HTTPCode:     ok.Code,
+		})
 		return
 	}
 
