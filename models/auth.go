@@ -13,7 +13,7 @@ type roleType string
 
 const (
 	AdminRole   roleType = "admin"
-	CashierRole roleType = "clashier"
+	CashierRole roleType = "cashier"
 	ManagerRole roleType = "manager"
 )
 
@@ -21,7 +21,7 @@ func ConvertRoleType(role string) roleType {
 	switch role {
 	case "admin":
 		return AdminRole
-	case "clashier":
+	case "cashier":
 		return CashierRole
 	case "manager":
 		return ManagerRole
@@ -39,7 +39,7 @@ var AuthDB = job.DB{
 type User struct {
 	ID          bson.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserName    string        `bson:"name" json:"name"`
-	Password    string        `bson:"password" json:"password"`
+	Password    string        `bson:"password" json:"-"`
 	FullName    string        `bson:"full_name" json:"full_name"`
 	Role        roleType      `bson:"role" json:"role"`
 	CreatedTime *time.Time    `json:"created_time" bson:"created_time"`

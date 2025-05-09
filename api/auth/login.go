@@ -3,6 +3,7 @@ package auth
 import (
 	"StoreServer/models"
 	myerror "StoreServer/utils/error"
+	"StoreServer/utils/jwt"
 	"StoreServer/utils/response"
 	"errors"
 	"net/http"
@@ -42,5 +43,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	response.MyResponse.Success(c, nil)
+	token, err := jwt.GenerateToken(user.ID, user.UserName, string(user.Role))
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
+		return
+	}
+
+	response.MyResponse.Success(c, gin.H{
+		"token": token,
+	})
 }

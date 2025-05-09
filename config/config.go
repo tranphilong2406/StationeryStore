@@ -2,6 +2,7 @@ package config
 
 import (
 	"StoreServer/utils/logger"
+
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -11,6 +12,7 @@ var config *Config
 type Config struct {
 	ServerPort string `envconfig:"SERVER_PORT"`
 	MONGOURL   string `envconfig:"MONGO_URL"`
+	JWTSecret  string `envconfig:"JWT_SECRET"`
 }
 
 func init() {
