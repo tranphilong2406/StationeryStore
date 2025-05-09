@@ -19,6 +19,7 @@ type Order struct {
 	ID          bson.ObjectID  `json:"id" bson:"_id,omitempty"`
 	Products    []ProductOrder `json:"products" bson:"products"`
 	TotalPrice  float64        `json:"total_price" bson:"total_price"`
+	Discount    float64        `json:"discount" bson:"discount"`
 	CreatedTime *time.Time     `json:"created_time" bson:"created_time"`
 	UpdatedTime *time.Time     `json:"updated_time" bson:"updated_time"`
 	DeletedTime *time.Time     `json:"deleted_time" bson:"deleted_time,omitempty"`

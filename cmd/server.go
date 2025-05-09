@@ -24,11 +24,14 @@ func SetupServer() {
 	job.DBConnect()
 	defer job.Disconnect()
 	// init collection
+	println("Init collection...")
 	models.InitExampleDB()
 	models.InitProductDB()
 	models.InitCategoryDB()
 	models.InitOrderDB()
 	models.InitAuthDB()
+	models.InitReceivedOrderDB()
+	println("Init collection done!")
 
 	s := SetHandler()
 
@@ -95,5 +98,10 @@ func SetHandler() *gin.Engine {
 	r.PUT("/api/user/", api.UpdateUser)
 	// Auth routes
 	r.POST("/api/auth/login", auth.Login)
+	// Received Order
+	r.POST("/api/rec_order/", api.CreateReceivedOrder)
+	r.GET("/api/rec_order/", api.GetReceivedOrder)
+	r.GET("/api/rec_order/:id", api.GetReceivedOrderByID)
+	r.DELETE("/api/rec_order/:id", api.DeleteReceivedOrder)
 	return r
 }

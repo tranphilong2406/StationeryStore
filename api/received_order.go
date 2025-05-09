@@ -5,14 +5,13 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"net/http"
 )
 
-func CreateOrder(c *gin.Context) {
-	var req models.Order
+func CreateReceivedOrder(c *gin.Context) {
+	var req models.ReceivedOrder
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
@@ -36,7 +35,8 @@ func CreateOrder(c *gin.Context) {
 
 		update := prod.Data.(*models.Product)
 
-		update.Stock -= req.Products[idx].Quantity
+		update.Stock += req.Products[idx].Quantity
+		update.Price = req.Products[idx].Price
 
 		updated := models.ProductDB.UpdateOne(filter, update)
 		if updated.Code != http.StatusOK {
@@ -45,11 +45,11 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
-	res := models.OrderDB.Create(req)
+	res := models.ReceivedOrderDB.Create(req)
 	c.JSON(res.Code, res)
 }
 
-func GetOrder(c *gin.Context) {
+func GetReceivedOrder(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
 
@@ -58,20 +58,20 @@ func GetOrder(c *gin.Context) {
 	}
 
 	offset := (page - 1) * pageSize
-	res := models.OrderDB.Query(filter, offset, pageSize)
+	res := models.ReceivedOrderDB.Query(filter, offset, pageSize)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
 	}
 
-	res.Data = res.Data.([]models.Order)
+	res.Data = res.Data.([]models.ReceivedOrder)
 	res.Page = page
 	res.PageSize = pageSize
 
 	c.JSON(res.Code, res)
 }
 
-func GetOrderByID(c *gin.Context) {
+func GetReceivedOrderByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		response.MyResponse.Error(c, myerror.EmptyParam())
@@ -88,12 +88,12 @@ func GetOrderByID(c *gin.Context) {
 		"_id": objID,
 	}
 
-	result := models.OrderDB.QueryOne(filter)
+	result := models.ReceivedOrderDB.QueryOne(filter)
 
 	c.JSON(result.Code, result)
 }
 
-func DeleteOrder(c *gin.Context) {
+func DeleteReceivedOrder(c *gin.Context) {
 	id := c.Param("id")
 
 	if id == "" {
@@ -111,7 +111,7 @@ func DeleteOrder(c *gin.Context) {
 		"_id": objID,
 	}
 
-	res := models.OrderDB.DeleteOne(filter)
+	res := models.ReceivedOrderDB.DeleteOne(filter)
 
 	c.JSON(res.Code, res)
 }
