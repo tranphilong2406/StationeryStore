@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"StoreServer/api"
+	auth "StoreServer/api/auth"
 	"StoreServer/config"
 	"StoreServer/job"
+	"StoreServer/middleware"
 	"StoreServer/models"
 	"StoreServer/utils/logger"
 	"fmt"
@@ -23,10 +25,14 @@ func SetupServer() {
 	job.DBConnect()
 	defer job.Disconnect()
 	// init collection
+	println("Init collection...")
 	models.InitExampleDB()
 	models.InitProductDB()
 	models.InitCategoryDB()
 	models.InitOrderDB()
+	models.InitAuthDB()
+	models.InitReceivedOrderDB()
+	println("Init collection done!")
 
 	s := SetHandler()
 
@@ -68,25 +74,35 @@ func SetHandler() *gin.Engine {
 	}))
 	r.Use(gin.Recovery())
 	// Example routes
-	r.POST("/api/example", api.CreateExample)
-	r.GET("/api/example", api.GetExample)
-	r.POST("/api/examples", api.CreateListExample)
-	r.PUT("/api/example/", api.UpdateExample)
-	r.DELETE("/api/example/:id", api.DeleteExample)
+	r.POST("/api/example", middleware.CheckLogin(), api.CreateExample)
+	r.GET("/api/example", middleware.CheckLogin(), api.GetExample)
+	r.POST("/api/examples", middleware.CheckLogin(), api.CreateListExample)
+	r.PUT("/api/example/", middleware.CheckLogin(), api.UpdateExample)
+	r.DELETE("/api/example/:id", middleware.CheckLogin(), api.DeleteExample)
 	// Product routes
-	r.GET("/api/product/", api.GetProduct)
-	r.POST("/api/product", api.CreateProduct)
-	r.PUT("/api/product/", api.UpdateProduct)
-	r.DELETE("/api/product/:id", api.DeleteProduct)
+	r.GET("/api/product/", middleware.CheckLogin(), api.GetProduct)
+	r.POST("/api/product", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateProduct)
+	r.PUT("/api/product/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.UpdateProduct)
+	r.DELETE("/api/product/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteProduct)
 	// Category routes
-	r.GET("/api/category/", api.GetCategory)
-	r.POST("/api/category", api.CreateCategory)
-	r.PUT("/api/category/", api.UpdateCategory)
-	r.DELETE("/api/category/:id", api.DeleteCategory)
+	r.GET("/api/category/", middleware.CheckLogin(), api.GetCategory)
+	r.POST("/api/category", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateCategory)
+	r.PUT("/api/category/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.UpdateCategory)
+	r.DELETE("/api/category/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteCategory)
 	//Order routes
-	r.POST("/api/order/", api.CreateOrder)
-	r.GET("/api/order/", api.GetOrder)
-	r.GET("/api/order/:id", api.GetOrderByID)
-	r.DELETE("/api/order/:id", api.DeleteOrder)
+	r.POST("/api/order/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateOrder)
+	r.GET("/api/order/", middleware.CheckLogin(), api.GetOrder)
+	r.GET("/api/order/:id", middleware.CheckLogin(), api.GetOrderByID)
+	r.DELETE("/api/order/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteOrder)
+	// User routes
+	r.POST("/api/user", middleware.CheckLogin(), middleware.CheckRole("admin"), api.CreateUser)
+	r.PUT("/api/user/", middleware.CheckLogin(), middleware.CheckRole("admin"), api.UpdateUser)
+	// Auth routes
+	r.POST("/api/auth/login", auth.Login)
+	// Received Order
+	r.POST("/api/rec_order/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateReceivedOrder)
+	r.GET("/api/rec_order/", middleware.CheckLogin(), api.GetReceivedOrder)
+	r.GET("/api/rec_order/:id", middleware.CheckLogin(), api.GetReceivedOrderByID)
+	r.DELETE("/api/rec_order/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteReceivedOrder)
 	return r
 }
