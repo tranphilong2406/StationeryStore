@@ -16,13 +16,15 @@ var ProductDB = job.DB{
 }
 
 type Product struct {
-	ID          bson.ObjectID `bson:"_id,omitempty" json:"id"`
-	CategoryID  string        `bson:"category_id" json:"category_id"`
-	Name        string        `bson:"name" json:"name"`
-	Description string        `bson:"description" json:"description"`
-	Image       string        `bson:"image" json:"image"`
-	Stock       int           `bson:"stock" json:"stock"`
-	Price       int           `bson:"price" json:"price"`
+	ID          bson.ObjectID `bson:"_id,omitempty" json:"id" form:"id"`
+	CategoryID  string        `bson:"category_id" json:"category_id" form:"category_id"`
+	SupplierID  string        `bson:"supplier_id" json:"supplier_id" form:"supplier_id"`
+	Name        string        `bson:"name" json:"name" form:"name"`
+	Description string        `bson:"description" json:"description" form:"description"`
+	Image       string        `bson:"image" json:"image" form:"image" `
+	Stock       int           `bson:"stock" json:"stock" form:"stock"`
+	BuyPrice    int           `bson:"buy_price" json:"buy_price" form:"buy_price"`
+	SellPrice   int           `bson:"sell_price" json:"sell_price" form:"sell_price"`
 	CreatedTime *time.Time    `json:"created_time" bson:"created_time"`
 	UpdatedTime *time.Time    `json:"updated_time" bson:"updated_time"`
 	DeletedTime *time.Time    `json:"deleted_time" bson:"deleted_time,omitempty"`
@@ -31,6 +33,7 @@ type Product struct {
 type ProductOrder struct {
 	ID       bson.ObjectID `bson:"_id" json:"id"`
 	Quantity int           `bson:"quantity" json:"quantity"`
+	Buy      int           `bson:"buy" json:"buy"`
 	Price    int           `bson:"price" json:"price"`
 	Discount int           `bson:"discount" json:"discount"`
 }
@@ -46,9 +49,13 @@ func (p *Product) Validate() response.Response {
 		res.Code = http.StatusBadRequest
 		res.Message = "Name cannot be empty"
 	}
-	if p.Price <= 0 {
+	if p.BuyPrice <= 0 {
 		res.Code = http.StatusBadRequest
-		res.Message = "Price must be greater than 0"
+		res.Message = "Buy Price must be greater than 0"
+	}
+	if p.SellPrice <= 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = "Sell Price must be greater than 0"
 	}
 	if p.Stock < 0 {
 		res.Code = http.StatusBadRequest

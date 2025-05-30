@@ -51,5 +51,6 @@ func Login(c *gin.Context) {
 
 	response.MyResponse.Success(c, gin.H{
 		"token": token,
+		"role":  user.Role,
 	})
 }

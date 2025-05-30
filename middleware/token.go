@@ -3,6 +3,7 @@ package middleware
 import (
 	"StoreServer/utils/jwt"
 	"StoreServer/utils/response"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,25 +12,25 @@ import (
 
 func CheckLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("Authorization")
+		fmt.Println("===> CheckLogin middleware called")
+		token := c.Request.Header.Get("Token")
 		if token == "" || !strings.HasPrefix(token, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, response.Response{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized",
 			})
-			c.Abort()
 			return
 		}
 
 		token = strings.TrimPrefix(token, "Bearer ")
+		fmt.Println("token:", token)
 
 		user, err := jwt.ParseToken(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, response.Response{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized",
 			})
-			c.Abort()
 			return
 		}
 
@@ -41,23 +42,22 @@ func CheckLogin() gin.HandlerFunc {
 
 func CheckRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		roleValue, exists := c.Get("role")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, response.Response{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized",
 			})
-			c.Abort()
 			return
 		}
 
 		userRole, ok := roleValue.(string)
 		if !ok {
-			c.JSON(http.StatusInternalServerError, response.Response{
+			c.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
 				Code:    http.StatusInternalServerError,
 				Message: "Role parsing failed",
 			})
-			c.Abort()
 			return
 		}
 
@@ -70,10 +70,9 @@ func CheckRole(allowedRoles ...string) gin.HandlerFunc {
 		}
 
 		// Nếu không có role phù hợp
-		c.JSON(http.StatusForbidden, response.Response{
+		c.AbortWithStatusJSON(http.StatusForbidden, response.Response{
 			Code:    http.StatusForbidden,
 			Message: "Permission denied",
 		})
-		c.Abort()
 	}
 }

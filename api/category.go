@@ -40,6 +40,18 @@ func GetCategory(c *gin.Context) {
 func UpdateCategory(c *gin.Context) {
 	var req models.Category
 
+	id := c.Param("id")
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
@@ -54,7 +66,7 @@ func UpdateCategory(c *gin.Context) {
 	}
 
 	filter := bson.M{
-		"_id":          req.ID,
+		"_id":          objID,
 		"deleted_time": nil,
 	}
 
