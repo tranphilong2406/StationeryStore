@@ -3,27 +3,51 @@ package models
 import (
 	"StoreServer/job"
 	"StoreServer/utils/response"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-var ReceivedOrderDB = job.DB{
-	ColName:     "received_order",
-	DBName:      "",
-	TemplateObj: ReceivedOrder{},
+type purchaseStatus string
+
+const (
+	Pending  purchaseStatus = "pending"
+	Approved purchaseStatus = "approved"
+	Rejected purchaseStatus = "rejected"
+)
+
+func ConvertPurchaseStatus(status string) purchaseStatus {
+	switch status {
+	case "pending":
+		return Pending
+	case "approved":
+		return Approved
+	case "rejected":
+		return Rejected
+	default:
+		return Pending
+	}
 }
 
-type ReceivedOrder struct {
+var PurchaseDB = job.DB{
+	ColName:     "purchase",
+	DBName:      "",
+	TemplateObj: Purchase{},
+}
+
+type Purchase struct {
 	ID          bson.ObjectID  `bson:"_id,omitempty" json:"id"`
+	SupplierID  string         `bson:"supplier_id" json:"supplier_id"`
 	Products    []ProductOrder `bson:"products" json:"products"`
 	TotalPrice  float64        `bson:"total_price" json:"total_price"`
+	Status      purchaseStatus `bson:"status" json:"status"` // e.g., "pending", "approved", "rejected"
 	CreatedTime *time.Time     `bson:"created_time" json:"created_time"`
 	UpdatedTime *time.Time     `bson:"updated_time" json:"updated_time"`
 	DeletedTime *time.Time     `bson:"deleted_time" json:"deleted_time,omitempty"`
 }
 
-func (r ReceivedOrder) Validate() response.Response {
+func (r Purchase) Validate() response.Response {
 	res := response.Response{
 		Code:    http.StatusOK,
 		Message: "OK",
@@ -42,6 +66,6 @@ func (r ReceivedOrder) Validate() response.Response {
 	return res
 }
 
-func InitReceivedOrderDB() {
-	ReceivedOrderDB.Init("store")
+func InitPurchaseDB() {
+	PurchaseDB.Init("store")
 }

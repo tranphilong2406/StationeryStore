@@ -186,10 +186,12 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 	}
 
 	return response.Response{
-		Message: "Query " + d.ColName + " successfully!",
-		Data:    result,
-		Code:    http.StatusOK,
-		Total:   int(total),
+		Message:  "Query " + d.ColName + " successfully!",
+		Data:     result,
+		Code:     http.StatusOK,
+		Page:     offset/limit + 1,
+		PageSize: limit,
+		Total:    int(total),
 	}
 }
 
@@ -240,7 +242,7 @@ func (d *DB) Create(inc interface{}) response.Response {
 	return response.Response{
 		Message: "Create " + d.ColName + " successfully!",
 		Data:    obj,
-		Code:    http.StatusOK,
+		Code:    http.StatusCreated,
 	}
 }
 

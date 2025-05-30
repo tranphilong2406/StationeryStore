@@ -5,34 +5,31 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func CreateProduct(c *gin.Context) {
-	var req models.Product
+func CreateSupplier(c *gin.Context) {
+	var req models.Supplier
 
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
 	}
 
-	fmt.Println("req: ", req)
-
 	if ok := req.Validate(); ok.Code != http.StatusOK {
 		c.JSON(ok.Code, ok)
 		return
 	}
 
-	res := models.ProductDB.Create(req)
+	res := models.SupplierDB.Create(req)
 
 	c.JSON(res.Code, res)
 }
 
-func GetProduct(c *gin.Context) {
+func GetSupplier(c *gin.Context) {
 	page := utils.ParseInt(c.Param("page"), 1)
 	pageSize := utils.ParseInt(c.Param("page_size"), 10)
 	filter := bson.M{
@@ -40,19 +37,20 @@ func GetProduct(c *gin.Context) {
 	}
 
 	offset := (page - 1) * pageSize
-	res := models.ProductDB.Query(filter, offset, pageSize)
+	res := models.SupplierDB.Query(filter, offset, pageSize)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
 	}
 
-	res.Data = res.Data.([]models.Product)
+	res.Data = res.Data.([]models.Supplier)
 
 	c.JSON(res.Code, res)
 }
 
-func UpdateProduct(c *gin.Context) {
-	var req models.Product
+func UpdateSupplier(c *gin.Context) {
+	var req models.Supplier
+
 	id := c.Param("id")
 	if id == "" {
 		response.MyResponse.Error(c, myerror.EmptyParam())
@@ -86,21 +84,19 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	update := res.Data.(*models.Product)
+	update := res.Data.(*models.Supplier)
 
 	update.Name = req.Name
-	update.Description = req.Description
-	update.Image = req.Image
-	update.Stock = req.Stock
-	update.SellPrice = req.SellPrice
-	update.BuyPrice = req.BuyPrice
+	update.Phone = req.Phone
+	update.Email = req.Email
+	update.Address = req.Address
 
 	updating := models.ProductDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }
 
-func DeleteProduct(c *gin.Context) {
+func DeleteSupplier(c *gin.Context) {
 	id := c.Param("id")
 
 	if id == "" {
@@ -118,7 +114,7 @@ func DeleteProduct(c *gin.Context) {
 		"_id": objID,
 	}
 
-	res := models.ProductDB.DeleteOne(filter)
+	res := models.SupplierDB.DeleteOne(filter)
 
 	c.JSON(res.Code, res)
 }

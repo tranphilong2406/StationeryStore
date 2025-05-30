@@ -38,10 +38,10 @@ var AuthDB = job.DB{
 
 type User struct {
 	ID          bson.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserName    string        `bson:"name" json:"name"`
-	Password    string        `bson:"password" json:"-"`
-	FullName    string        `bson:"full_name" json:"full_name"`
-	Role        roleType      `bson:"role" json:"role"`
+	UserName    string        `bson:"name" json:"name" form:"name" binding:"required"`
+	Password    string        `bson:"password" json:"password" form:"password" binding:"required"`
+	FullName    string        `bson:"full_name" json:"full_name" form:"full_name" binding:"required"`
+	Role        roleType      `bson:"role" json:"role" form:"role" binding:"required"`
 	CreatedTime *time.Time    `json:"created_time" bson:"created_time"`
 	UpdatedTime *time.Time    `json:"updated_time" bson:"updated_time"`
 	DeletedTime *time.Time    `json:"deleted_time" bson:"deleted_time,omitempty"`

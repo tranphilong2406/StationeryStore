@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"StoreServer/api"
-	auth "StoreServer/api/auth"
+	"StoreServer/api/auth"
 	"StoreServer/config"
 	"StoreServer/job"
 	"StoreServer/middleware"
@@ -31,23 +31,25 @@ func SetupServer() {
 	models.InitCategoryDB()
 	models.InitOrderDB()
 	models.InitAuthDB()
-	models.InitReceivedOrderDB()
+	models.InitPurchaseDB()
+	models.InitSupplierDB()
 	println("Init collection done!")
 
 	s := SetHandler()
+	{
+		go func() {
+			server := &http.Server{
+				Addr:              ":" + con.ServerPort,
+				Handler:           s,
+				WriteTimeout:      time.Second * 30,
+				IdleTimeout:       time.Second * 30,
+				ReadHeaderTimeout: time.Minute,
+			}
+			logger.GetLogger().Info("Server running on port: " + server.Addr)
 
-	go func() {
-		server := &http.Server{
-			Addr:              ":" + con.ServerPort,
-			Handler:           s,
-			WriteTimeout:      time.Second * 30,
-			IdleTimeout:       time.Second * 30,
-			ReadHeaderTimeout: time.Minute,
-		}
-		logger.GetLogger().Info("Server running on port: " + server.Addr)
-
-		errs <- server.ListenAndServe()
-	}()
+			errs <- server.ListenAndServe()
+		}()
+	}
 
 	err := <-errs
 	if err != nil {
@@ -57,8 +59,11 @@ func SetupServer() {
 
 func SetHandler() *gin.Engine {
 	r := gin.Default()
+	r.Use(gin.Recovery())
+	r.Use(gin.Logger())
+
 	r.Use(cors.New(cors.Config{
-		AllowAllOrigins: true,
+		AllowOrigins: []string{"*"},
 		AllowMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
@@ -72,37 +77,56 @@ func SetHandler() *gin.Engine {
 		AllowWebSockets:        true,
 		AllowFiles:             true,
 	}))
-	r.Use(gin.Recovery())
+
+	r.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	authRoute := r.Group("/auth")
+	{
+		authRoute.POST("/login", auth.Login)
+	}
+
 	// Example routes
-	r.POST("/api/example", middleware.CheckLogin(), api.CreateExample)
-	r.GET("/api/example", middleware.CheckLogin(), api.GetExample)
-	r.POST("/api/examples", middleware.CheckLogin(), api.CreateListExample)
-	r.PUT("/api/example/", middleware.CheckLogin(), api.UpdateExample)
-	r.DELETE("/api/example/:id", middleware.CheckLogin(), api.DeleteExample)
-	// Product routes
-	r.GET("/api/product/", middleware.CheckLogin(), api.GetProduct)
-	r.POST("/api/product", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateProduct)
-	r.PUT("/api/product/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.UpdateProduct)
-	r.DELETE("/api/product/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteProduct)
-	// Category routes
-	r.GET("/api/category/", middleware.CheckLogin(), api.GetCategory)
-	r.POST("/api/category", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateCategory)
-	r.PUT("/api/category/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.UpdateCategory)
-	r.DELETE("/api/category/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteCategory)
-	//Order routes
-	r.POST("/api/order/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateOrder)
-	r.GET("/api/order/", middleware.CheckLogin(), api.GetOrder)
-	r.GET("/api/order/:id", middleware.CheckLogin(), api.GetOrderByID)
-	r.DELETE("/api/order/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteOrder)
-	// User routes
-	r.POST("/api/user", middleware.CheckLogin(), middleware.CheckRole("admin"), api.CreateUser)
-	r.PUT("/api/user/", middleware.CheckLogin(), middleware.CheckRole("admin"), api.UpdateUser)
-	// Auth routes
-	r.POST("/api/auth/login", auth.Login)
-	// Received Order
-	r.POST("/api/rec_order/", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.CreateReceivedOrder)
-	r.GET("/api/rec_order/", middleware.CheckLogin(), api.GetReceivedOrder)
-	r.GET("/api/rec_order/:id", middleware.CheckLogin(), api.GetReceivedOrderByID)
-	r.DELETE("/api/rec_order/:id", middleware.CheckLogin(), middleware.CheckRole("admin", "manager"), api.DeleteReceivedOrder)
+	apiRoute := r.Group("/api")
+	apiRoute.Use(middleware.CheckLogin())
+	{
+		apiRoute.POST("/example/", api.CreateExample)
+		apiRoute.GET("/examples/", api.GetExample)
+		apiRoute.POST("/examples/", api.CreateListExample)
+		apiRoute.PUT("/examples/", api.UpdateExample)
+		apiRoute.DELETE("/examples/:id", api.DeleteExample)
+		// Product routes
+		apiRoute.GET("/products/", api.GetProduct)
+		apiRoute.POST("/products/", middleware.CheckRole("admin", "manager"), api.CreateProduct)
+		apiRoute.PUT("/products/:id", middleware.CheckRole("admin", "manager"), api.UpdateProduct)
+		apiRoute.DELETE("/products/:id", middleware.CheckRole("admin", "manager"), api.DeleteProduct)
+		// Category routes
+		apiRoute.GET("/categories/", api.GetCategory)
+		apiRoute.POST("/categories/", middleware.CheckRole("admin", "manager"), api.CreateCategory)
+		apiRoute.PUT("/categories/", middleware.CheckRole("admin", "manager"), api.UpdateCategory)
+		apiRoute.DELETE("/categories/:id", middleware.CheckRole("admin", "manager"), api.DeleteCategory)
+		//Order routes
+		apiRoute.POST("/orders/", middleware.CheckRole("admin", "manager", "cashier"), api.CreateOrder)
+		apiRoute.GET("/orders/", api.GetOrder)
+		apiRoute.GET("/orders/:id", api.GetOrderByID)
+		apiRoute.DELETE("/orders/:id", middleware.CheckRole("admin", "manager"), api.DeleteOrder)
+		// User routes
+		apiRoute.POST("/users/", middleware.CheckRole("admin"), api.CreateUser)
+		apiRoute.PUT("/users/", middleware.CheckRole("admin"), api.UpdateUser)
+		// Received Order
+		apiRoute.POST("/purchases/", middleware.CheckRole("admin", "manager"), api.CreatePurchase)
+		apiRoute.GET("/purchases/", api.GetPurchase)
+		apiRoute.GET("/purchases/:id", api.GetPurchaseByID)
+		apiRoute.PUT("/purchases/:id", middleware.CheckRole("admin", "manager"), api.UpdatePurchase)
+		apiRoute.PUT("/purchases/:id/approve", middleware.CheckRole("admin", "manager"), api.ApprovePurchase)
+		apiRoute.PUT("/purchases/:id/reject", middleware.CheckRole("admin", "manager"), api.RejectPurchase)
+		apiRoute.DELETE("/perchases/:id", middleware.CheckRole("admin", "manager"), api.DeletePurchase)
+		// Supplier routes
+		apiRoute.POST("/suppliers/", middleware.CheckRole("admin", "manager"), api.CreateSupplier)
+		apiRoute.GET("/suppliers/", api.GetSupplier)
+		apiRoute.PUT("/suppliers/", middleware.CheckRole("admin", "manager"), api.UpdateSupplier)
+		apiRoute.DELETE("/suppliers/:id", middleware.CheckRole("admin", "manager"), api.DeleteSupplier)
+	}
 	return r
 }

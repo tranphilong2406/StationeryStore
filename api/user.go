@@ -37,6 +37,19 @@ func CreateUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	var req models.User
+
+	id := c.Param("id")
+	if id == "" {
+		response.MyResponse.Error(c, myerror.EmptyParam())
+		return
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
@@ -48,7 +61,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	filter := bson.M{
-		"_id": req.ID,
+		"_id": objID,
 	}
 
 	res := models.AuthDB.UpdateOne(filter, req)
