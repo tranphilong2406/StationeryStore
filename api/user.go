@@ -2,6 +2,7 @@ package api
 
 import (
 	"StoreServer/models"
+	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
 	"net/http"
@@ -32,6 +33,25 @@ func CreateUser(c *gin.Context) {
 	req.Password = string(passHash)
 
 	res := models.AuthDB.Create(req)
+	c.JSON(res.Code, res)
+}
+
+func GetUser(c *gin.Context) {
+	page := utils.ParseInt(c.Param("page"), 1)
+	pageSize := utils.ParseInt(c.Param("page_size"), 10)
+	filter := bson.M{
+		"deleted_time": nil,
+	}
+
+	offset := (page - 1) * pageSize
+	res := models.AuthDB.Query(filter, offset, pageSize)
+	if res.Code != http.StatusOK {
+		c.JSON(res.Code, res)
+		return
+	}
+
+	res.Data = res.Data.([]models.User)
+
 	c.JSON(res.Code, res)
 }
 

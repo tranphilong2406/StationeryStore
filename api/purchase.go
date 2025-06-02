@@ -70,7 +70,6 @@ func ApprovePurchase(c *gin.Context) {
 		update := prod.Data.(*models.Product)
 
 		update.Stock += purchaseData.Products[idx].Quantity
-		update.SellPrice = purchaseData.Products[idx].Price
 		update.BuyPrice = purchaseData.Products[idx].Buy
 
 		updated := models.ProductDB.UpdateOne(filter, update)

@@ -114,6 +114,7 @@ func SetHandler() *gin.Engine {
 		// User routes
 		apiRoute.POST("/users/", middleware.CheckRole("admin"), api.CreateUser)
 		apiRoute.PUT("/users/", middleware.CheckRole("admin"), api.UpdateUser)
+		apiRoute.GET("/users/", middleware.CheckRole("admin"), api.GetUser)
 		// Received Order
 		apiRoute.POST("/purchases/", middleware.CheckRole("admin", "manager"), api.CreatePurchase)
 		apiRoute.GET("/purchases/", api.GetPurchase)
@@ -121,11 +122,11 @@ func SetHandler() *gin.Engine {
 		apiRoute.PUT("/purchases/:id", middleware.CheckRole("admin", "manager"), api.UpdatePurchase)
 		apiRoute.PUT("/purchases/:id/approve", middleware.CheckRole("admin", "manager"), api.ApprovePurchase)
 		apiRoute.PUT("/purchases/:id/reject", middleware.CheckRole("admin", "manager"), api.RejectPurchase)
-		apiRoute.DELETE("/perchases/:id", middleware.CheckRole("admin", "manager"), api.DeletePurchase)
+		apiRoute.DELETE("/purchases/:id", middleware.CheckRole("admin", "manager"), api.DeletePurchase)
 		// Supplier routes
 		apiRoute.POST("/suppliers/", middleware.CheckRole("admin", "manager"), api.CreateSupplier)
 		apiRoute.GET("/suppliers/", api.GetSupplier)
-		apiRoute.PUT("/suppliers/", middleware.CheckRole("admin", "manager"), api.UpdateSupplier)
+		apiRoute.PUT("/suppliers/:id", middleware.CheckRole("admin", "manager"), api.UpdateSupplier)
 		apiRoute.DELETE("/suppliers/:id", middleware.CheckRole("admin", "manager"), api.DeleteSupplier)
 	}
 	return r

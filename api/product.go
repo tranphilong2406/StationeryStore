@@ -88,9 +88,13 @@ func UpdateProduct(c *gin.Context) {
 
 	update := res.Data.(*models.Product)
 
+	if req.Image != "" {
+		update.Image = req.Image
+	}
+
 	update.Name = req.Name
 	update.Description = req.Description
-	update.Image = req.Image
+
 	update.Stock = req.Stock
 	update.SellPrice = req.SellPrice
 	update.BuyPrice = req.BuyPrice
