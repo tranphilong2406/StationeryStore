@@ -154,6 +154,7 @@ func (d *DB) Query(inc interface{}, offset, limit int) response.Response {
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(offset))
+	findOptions.SetSort(bson.M{"created_time": -1})
 
 	total, err := d.db.Collection(d.ColName).CountDocuments(context.TODO(), inc)
 	if err != nil {
