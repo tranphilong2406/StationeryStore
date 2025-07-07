@@ -37,8 +37,8 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	page := utils.ParseInt(c.Param("page"), 1)
-	pageSize := utils.ParseInt(c.Param("page_size"), 10)
+	page := utils.ParseInt(c.Query("page"), 1)
+	pageSize := utils.ParseInt(c.Query("page_size"), 10)
 	filter := bson.M{
 		"deleted_time": nil,
 	}

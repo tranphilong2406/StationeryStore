@@ -1,6 +1,9 @@
 package utils
 
-import "strconv"
+import (
+	"strconv"
+	"time"
+)
 
 func ParseInt(s string, def int) int {
 	if s == "" {
@@ -11,4 +14,16 @@ func ParseInt(s string, def int) int {
 		return def
 	}
 	return num
+}
+
+func ParseTime(s string) time.Time {
+	if s == "" {
+		return time.Now()
+	}
+	// Assuming the time is in a specific format, you can add parsing logic here if needed.
+	timeParse, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Now()
+	}
+	return timeParse
 }

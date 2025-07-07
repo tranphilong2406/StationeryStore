@@ -12,7 +12,6 @@ import (
 
 func CheckLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println("===> CheckLogin middleware called")
 		token := c.Request.Header.Get("Token")
 		if token == "" || !strings.HasPrefix(token, "Bearer ") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Response{

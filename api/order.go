@@ -4,6 +4,7 @@ import (
 	"StoreServer/models"
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
+	gettime "StoreServer/utils/get_time"
 	"StoreServer/utils/response"
 	"net/http"
 
@@ -53,8 +54,14 @@ func GetOrder(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
 
+	time_start, time_end := gettime.GetTimeRangeFromKeyword(c.Query("time_range"))
+
 	filter := bson.M{
 		"deleted_time": nil,
+		"created_time": bson.M{
+			"$gte": time_start,
+			"$lte": time_end,
+		},
 	}
 
 	offset := (page - 1) * pageSize

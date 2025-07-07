@@ -104,7 +104,7 @@ func SetHandler() *gin.Engine {
 		// Category routes
 		apiRoute.GET("/categories/", api.GetCategory)
 		apiRoute.POST("/categories/", middleware.CheckRole("admin", "manager"), api.CreateCategory)
-		apiRoute.PUT("/categories/", middleware.CheckRole("admin", "manager"), api.UpdateCategory)
+		apiRoute.PUT("/categories/:id", middleware.CheckRole("admin", "manager"), api.UpdateCategory)
 		apiRoute.DELETE("/categories/:id", middleware.CheckRole("admin", "manager"), api.DeleteCategory)
 		//Order routes
 		apiRoute.POST("/orders/", middleware.CheckRole("admin", "manager", "cashier"), api.CreateOrder)
