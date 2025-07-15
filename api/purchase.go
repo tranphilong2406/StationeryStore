@@ -4,8 +4,8 @@ import (
 	"StoreServer/models"
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
+	gettime "StoreServer/utils/get_time"
 	"StoreServer/utils/response"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,12 +14,11 @@ import (
 
 func CreatePurchase(c *gin.Context) {
 	var req models.Purchase
+
 	if err := c.ShouldBind(&req); err != nil {
 		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
 	}
-
-	fmt.Println("CreatePurchase request:", req)
 
 	if ok := req.Validate(); ok.Code != http.StatusOK {
 		c.JSON(ok.Code, ok)
@@ -92,7 +91,7 @@ func RejectPurchase(c *gin.Context) {
 
 	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		response.MyResponse.Error(c, myerror.AnyError(http.StatusInternalServerError, err))
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
 		return
 	}
 
@@ -100,25 +99,27 @@ func RejectPurchase(c *gin.Context) {
 		"_id": objID,
 	}
 
-	purchase := models.PurchaseDB.QueryOne(filter)
-	if purchase.Code != http.StatusOK {
-		c.JSON(purchase.Code, purchase)
-		return
+	update := bson.M{
+		"$set": bson.M{
+			"status": models.Rejected,
+		},
 	}
 
-	purchaseData := purchase.Data.(*models.Purchase)
-	purchaseData.Status = models.Rejected
-
-	res := models.PurchaseDB.UpdateOne(filter, purchaseData)
+	res := models.PurchaseDB.UpdateOne(filter, update)
 	c.JSON(res.Code, res)
 }
 
 func GetPurchase(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
+	timeStart, timeEnd := gettime.RangeFromKeyword(c.Query("time_range"))
 
 	filter := bson.M{
 		"deleted_time": nil,
+		"created_time": bson.M{
+			"$gte": timeStart,
+			"$lte": timeEnd,
+		},
 	}
 
 	offset := (page - 1) * pageSize

@@ -27,8 +27,16 @@ func CreateCategory(c *gin.Context) {
 func GetCategory(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
+	name := c.Query("search")
 	filter := bson.M{
 		"deleted_time": nil,
+	}
+
+	if name != "" {
+		filter["name"] = bson.M{
+			"$regex":   name,
+			"$options": "i",
+		}
 	}
 
 	offset := (page - 1) * pageSize

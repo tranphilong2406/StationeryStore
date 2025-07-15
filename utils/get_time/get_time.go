@@ -2,11 +2,14 @@ package gettime
 
 import "time"
 
-func GetTimeRangeFromKeyword(keyword string) (time.Time, time.Time) {
+func RangeFromKeyword(keyword string) (time.Time, time.Time) {
 	now := time.Now()
 	loc := now.Location()
 
 	switch keyword {
+	case "today":
+		start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+		return start, now
 	case "last_7_days":
 		return now.AddDate(0, 0, -7), now
 	case "this_month":
