@@ -27,3 +27,15 @@ func ParseTime(s string) time.Time {
 	}
 	return timeParse
 }
+
+func ParseBool(s string) bool {
+	if s == "" {
+		return true
+	}
+	
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return true
+	}
+	return b
+}

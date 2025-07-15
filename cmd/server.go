@@ -111,6 +111,7 @@ func SetHandler() *gin.Engine {
 		apiRoute.GET("/orders/", api.GetOrder)
 		apiRoute.GET("/orders/:id", api.GetOrderByID)
 		apiRoute.DELETE("/orders/:id", middleware.CheckRole("admin", "manager"), api.DeleteOrder)
+		apiRoute.PUT("/orders/", middleware.CheckRole("admin", "manager"), api.UpdateStatusOrder)
 		// User routes
 		apiRoute.POST("/users/", middleware.CheckRole("admin"), api.CreateUser)
 		apiRoute.PUT("/users/", middleware.CheckRole("admin"), api.UpdateUser)

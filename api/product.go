@@ -5,7 +5,6 @@ import (
 	"StoreServer/utils"
 	myerror "StoreServer/utils/error"
 	"StoreServer/utils/response"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,8 +19,6 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("req: ", req)
-
 	if ok := req.Validate(); ok.Code != http.StatusOK {
 		c.JSON(ok.Code, ok)
 		return
@@ -35,35 +32,25 @@ func CreateProduct(c *gin.Context) {
 func GetProduct(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
-	category_id := c.Query("category_id")
+	categoryID := c.Query("category_id")
 	name := c.Query("search")
-	var filter bson.M
-
-	if category_id == "" {
-		if name != "" {
-			filter = bson.M{
-				"deleted_time": nil,
-				"name":         bson.M{"$regex": name, "$options": "i"},
-			}
-		} else {
-			filter = bson.M{
-				"deleted_time": nil,
-			}
-		}
-	} else {
-		if name != "" {
-			filter = bson.M{
-				"deleted_time": nil,
-				"category_id":  category_id,
-				"name":         bson.M{"$regex": name, "$options": "i"},
-			}
-		} else {
-			filter = bson.M{
-				"deleted_time": nil,
-				"category_id":  category_id,
-			}
-		}
+	supplierID := c.Query("supplier_id")
+	filter := bson.M{
+		"deleted_time": nil,
 	}
+
+	if categoryID != "" {
+		filter["category_id"] = categoryID
+	}
+
+	if supplierID != "" {
+		filter["supplier_id"] = supplierID
+	}
+
+	if name != "" {
+		filter["name"] = bson.M{"$regex": name, "$options": "i"}
+	}
+
 	offset := (page - 1) * pageSize
 	res := models.ProductDB.Query(filter, offset, pageSize)
 	if res.Code != http.StatusOK {

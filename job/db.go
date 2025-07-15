@@ -293,7 +293,7 @@ func (d *DB) CreateMany(incList ...interface{}) response.Response {
 	}
 }
 
-// Update all matched item in DB
+// UpdateOne all matched item in DB
 func (d *DB) UpdateOne(filter interface{}, updater interface{}) response.Response {
 	obj, err := d.convertToBson(updater)
 	if err != nil {

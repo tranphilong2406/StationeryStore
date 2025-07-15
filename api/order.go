@@ -6,6 +6,7 @@ import (
 	myerror "StoreServer/utils/error"
 	gettime "StoreServer/utils/get_time"
 	"StoreServer/utils/response"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -53,16 +54,23 @@ func CreateOrder(c *gin.Context) {
 func GetOrder(c *gin.Context) {
 	page := utils.ParseInt(c.Query("page"), 1)
 	pageSize := utils.ParseInt(c.Query("page_size"), 10)
+	status := c.Query("status")
 
-	time_start, time_end := gettime.GetTimeRangeFromKeyword(c.Query("time_range"))
+	timeStart, timeEnd := gettime.RangeFromKeyword(c.Query("time_range"))
 
 	filter := bson.M{
 		"deleted_time": nil,
 		"created_time": bson.M{
-			"$gte": time_start,
-			"$lte": time_end,
+			"$gte": timeStart,
+			"$lte": timeEnd,
 		},
 	}
+
+	if status != "all" {
+		filter["status"] = utils.ParseBool(status)
+	}
+
+	fmt.Println("filter:", filter)
 
 	offset := (page - 1) * pageSize
 	res := models.OrderDB.Query(filter, offset, pageSize)
@@ -75,6 +83,20 @@ func GetOrder(c *gin.Context) {
 	res.Page = page
 	res.PageSize = pageSize
 
+	c.JSON(res.Code, res)
+}
+
+func UpdateStatusOrder(c *gin.Context) {
+	var req models.UpdateOrder
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.MyResponse.Error(c, myerror.AnyError(http.StatusBadRequest, err))
+		return
+	}
+
+	filter := bson.M{"_id": req.ID}
+	update := bson.M{"status": req.Status}
+
+	res := models.OrderDB.UpdateOne(filter, update)
 	c.JSON(res.Code, res)
 }
 
