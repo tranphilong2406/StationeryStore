@@ -82,7 +82,7 @@ func UpdateSupplier(c *gin.Context) {
 		"deleted_time": nil,
 	}
 
-	res := models.ProductDB.QueryOne(filter)
+	res := models.SupplierDB.QueryOne(filter)
 	if res.Code != http.StatusOK {
 		c.JSON(res.Code, res)
 		return
@@ -95,7 +95,7 @@ func UpdateSupplier(c *gin.Context) {
 	update.Email = req.Email
 	update.Address = req.Address
 
-	updating := models.ProductDB.UpdateOne(filter, update)
+	updating := models.SupplierDB.UpdateOne(filter, update)
 
 	c.JSON(updating.Code, updating)
 }
