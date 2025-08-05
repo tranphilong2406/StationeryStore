@@ -1,5 +1,5 @@
 
-# Stationery Store
+# POS-SERVICE
 
 API server
 
